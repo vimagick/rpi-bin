@@ -23,3 +23,7 @@ pre-built binaries for raspberry-pi
 - [x] meek-server-0.20-armv7h
 - [x] obfs4proxy-0.0.6-armv6h
 - [x] obfs4proxy-0.0.6-armv7h
+- [x] swarm-1.0.0-armv6h
+- [x] swarm-1.0.0-armv7h
+- [x] webhook-2.3.5-armv6h
+- [x] webhook-2.3.5-armv7h
