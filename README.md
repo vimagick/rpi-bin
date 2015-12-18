@@ -7,6 +7,7 @@ pre-built binaries for raspberry-pi
 - [x] docker-compose
 - [x] etcd
 - [x] etcdctl
+- [x] flanneld
 - [x] fleetctl
 - [x] fleetd
 - [x] h2o
