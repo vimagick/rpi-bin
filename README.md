@@ -2,19 +2,12 @@
 
 pre-built binaries for raspberry-pi
 
-- [x] confd
-- [x] docker
-- [x] docker-compose
-- [x] etcd
-- [x] etcdctl
-- [x] flanneld
-- [x] fleetctl
-- [x] fleetd
-- [x] h2o
-- [x] hugo
-- [x] lantern
-- [x] meek-client
-- [x] meek-server
-- [x] obfs4proxy
-- [x] swarm
-- [x] webhook
+- [x] confd (0.11.0)
+- [x] docker-compose (1.8.1)
+- [x] etcd/etcdctl (2.3.7)
+- [x] flanneld (0.5.5)
+- [x] fleetd/fleetctl (0.11.5)
+- [x] lantern (2.2.4)
+- [x] meek-server/meek-client (0.20)
+- [x] obfs4proxy (0.0.6)
+- [x] webhook (2.3.8)
