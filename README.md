@@ -10,4 +10,5 @@ pre-built binaries for raspberry-pi
 - [x] lantern (2.2.4)
 - [x] meek-server/meek-client (0.20)
 - [x] obfs4proxy (0.0.6)
+- [x] evsieve (1.3.1)
 - [x] webhook (2.3.8)
