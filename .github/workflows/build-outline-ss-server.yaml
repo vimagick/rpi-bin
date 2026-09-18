@@ -3,6 +3,14 @@ name: Build outline-ss-server
 on:
   workflow_dispatch:
     inputs:
+      golang:
+        description: 'Golang version'
+        required: true
+        default: '1.27'
+        type: choice
+        options:
+          - '1.27'
+          - '1.23'
       version:
         description: 'tunnel-server version'
         required: true
@@ -17,7 +25,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: golang:1.27
+      image: golang:${{ github.event.inputs.golang }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
