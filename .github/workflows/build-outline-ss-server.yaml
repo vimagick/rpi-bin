@@ -33,7 +33,10 @@ jobs:
           curl -sSfLO "https://github.com/OutlineFoundation/tunnel-server/raw/refs/tags/v${VERSION}/service/tcp.go"
 
       - name: Apply patch
-        run: patch -p1 < tcp.patch
+        run: |
+          apt-get update
+          apt-get install -y patch
+          patch -p1 < tcp.patch
 
       - name: Build
         run: |
