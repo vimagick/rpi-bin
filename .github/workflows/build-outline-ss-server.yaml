@@ -1,0 +1,76 @@
+name: Build outline-ss-server
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'tunnel-server version'
+        required: true
+        default: '1.9.2'
+
+env:
+  VERSION: ${{ github.event.inputs.version }}
+  USER_ID: vimagick
+  GIST_ID: f56a7b1dd250d4e4ccd4da16632c6dde
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.27
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download gist files
+        run: |
+          curl -sSfLO "https://gist.githubusercontent.com/${USER_ID}/${GIST_ID}/raw/private_net.go"
+          curl -sSfLO "https://gist.githubusercontent.com/${USER_ID}/${GIST_ID}/raw/tcp.patch"
+          ls -la private_net.go tcp.patch
+
+      - name: Download tcp.go
+        run: |
+          curl -sSfLO "https://github.com/OutlineFoundation/tunnel-server/raw/refs/tags/v${VERSION}/service/tcp.go"
+
+      - name: Apply patch
+        run: patch -p1 < tcp.patch
+
+      - name: Build
+        run: |
+          set -euo pipefail
+
+          go install "github.com/OutlineFoundation/tunnel-server/cmd/outline-ss-server@v${VERSION}"
+
+          MODDIR="/go/pkg/mod/github.com/!outline!foundation/tunnel-server@v${VERSION}"
+          cd "${MODDIR}/cmd/outline-ss-server"
+
+          mv "${GITHUB_WORKSPACE}/private_net.go" ../../net/
+          mv "${GITHUB_WORKSPACE}/tcp.go" ../../service/
+
+          go clean -cache
+
+          mkdir -p "${GITHUB_WORKSPACE}/outline-ss-server_${VERSION}-dev"
+
+          for GOOS in linux darwin windows; do
+            for GOARCH in amd64 arm64; do
+              CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
+                go build \
+                  -ldflags="-s -w -X main.version=${VERSION}-dev" \
+                  -o "outline-ss-server-${GOOS}-${GOARCH}"
+            done
+          done
+
+          mv outline-ss-server-* "${GITHUB_WORKSPACE}/outline-ss-server_${VERSION}-dev/"
+
+      - name: Verify version
+        run: ./outline-ss-server_${VERSION}-dev/outline-ss-server-linux-amd64 -version
+
+      - name: Package
+        run: tar czf outline-ss-server_${VERSION}-dev.tar.gz outline-ss-server_${VERSION}-dev
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: outline-ss-server_${{ env.VERSION }}-dev
+          path: outline-ss-server_${{ env.VERSION }}-dev.tar.gz
+          retention-days: 30
