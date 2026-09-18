@@ -32,23 +32,30 @@ jobs:
         run: |
           curl -sSfLO "https://github.com/OutlineFoundation/tunnel-server/raw/refs/tags/v${VERSION}/service/tcp.go"
 
-      - name: Apply patch
+      - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y patch
-          patch -p1 < tcp.patch
+          apt-get install -y git patch
+
+      - name: Clone source
+        run: |
+          git clone --depth 1 --branch "v${VERSION}" \
+            https://github.com/OutlineFoundation/tunnel-server.git \
+            tunnel-server
+
+      - name: Apply patch
+        working-directory: tunnel-server
+        run: patch -p1 < "${GITHUB_WORKSPACE}/tcp.patch"
+
+      - name: Replace source files
+        run: |
+          mv "${GITHUB_WORKSPACE}/private_net.go" tunnel-server/net/
+          mv "${GITHUB_WORKSPACE}/tcp.go" tunnel-server/service/
 
       - name: Build
+        working-directory: tunnel-server
         run: |
           set -euo pipefail
-
-          go install "github.com/OutlineFoundation/tunnel-server/cmd/outline-ss-server@v${VERSION}"
-
-          MODDIR="/go/pkg/mod/github.com/!outline!foundation/tunnel-server@v${VERSION}"
-          cd "${MODDIR}/cmd/outline-ss-server"
-
-          mv "${GITHUB_WORKSPACE}/private_net.go" ../../net/
-          mv "${GITHUB_WORKSPACE}/tcp.go" ../../service/
 
           go clean -cache
 
@@ -59,11 +66,10 @@ jobs:
               CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
                 go build \
                   -ldflags="-s -w -X main.version=${VERSION}-dev" \
-                  -o "outline-ss-server-${GOOS}-${GOARCH}"
+                  -o "${GITHUB_WORKSPACE}/outline-ss-server_${VERSION}-dev/outline-ss-server-${GOOS}-${GOARCH}" \
+                  ./cmd/outline-ss-server
             done
           done
-
-          mv outline-ss-server-* "${GITHUB_WORKSPACE}/outline-ss-server_${VERSION}-dev/"
 
       - name: Verify version
         run: ./outline-ss-server_${VERSION}-dev/outline-ss-server-linux-amd64 -version
