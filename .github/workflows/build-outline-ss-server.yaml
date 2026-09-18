@@ -52,7 +52,7 @@ jobs:
             tunnel-server
 
       - name: Apply patch
-        working-directory: tunnel-server
+        working-directory: tunnel-server/service
         run: patch -p1 < "${GITHUB_WORKSPACE}/tcp.patch"
 
       - name: Replace source files
