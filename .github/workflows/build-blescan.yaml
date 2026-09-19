@@ -99,6 +99,7 @@ jobs:
       - name: Download blescan source
         run: |
           curl -sSL "https://github.com/mikemoraned/blescan/archive/refs/heads/${{ inputs.version }}.tar.gz" | tar xz --strip 1
+          rm -f rust-toolchain.toml rust-toolchain
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
