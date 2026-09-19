@@ -19,7 +19,7 @@ on:
           - '22.04'
 
 jobs:
-  build:
+  build-linux:
     name: Build ${{ matrix.arch }} (ubuntu ${{ inputs.ubuntu_version }})
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -77,4 +77,82 @@ jobs:
         with:
           name: blescan-${{ inputs.version }}-linux-${{ matrix.arch }}
           path: dist/blescan-${{ inputs.version }}-linux-${{ matrix.arch }}
+          if-no-files-found: error
+
+  build-macos-arch:
+    name: Build macOS ${{ matrix.arch }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64-apple-darwin
+          - arch: aarch64
+            target: aarch64-apple-darwin
+
+    steps:
+      - name: Install system dependencies
+        run: brew install cmake pkg-config
+
+      - name: Download blescan source
+        run: |
+          curl -sSL "https://github.com/mikemoraned/blescan/archive/refs/heads/${{ inputs.version }}.tar.gz" | tar xz --strip 1
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Verify binary
+        run: ./target/${{ matrix.target }}/release/blescan --version
+
+      - name: Upload per-arch binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: blescan-macos-${{ matrix.arch }}
+          path: target/${{ matrix.target }}/release/blescan
+          if-no-files-found: error
+
+  build-macos-universal:
+    name: Build macOS Universal
+    runs-on: macos-latest
+    needs: build-macos-arch
+
+    steps:
+      - name: Download x86_64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: blescan-macos-x86_64
+          path: binaries/x86_64
+
+      - name: Download aarch64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: blescan-macos-aarch64
+          path: binaries/aarch64
+
+      - name: Combine with lipo
+        run: |
+          mkdir -p dist
+          lipo -create \
+            binaries/x86_64/blescan \
+            binaries/aarch64/blescan \
+            -output dist/blescan-${{ inputs.version }}-macos-universal
+          chmod +x dist/blescan-${{ inputs.version }}-macos-universal
+
+      - name: Verify universal binary
+        run: |
+          file dist/blescan-${{ inputs.version }}-macos-universal
+          lipo -info dist/blescan-${{ inputs.version }}-macos-universal
+          ./dist/blescan-${{ inputs.version }}-macos-universal --version
+
+      - name: Upload universal binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: blescan-${{ inputs.version }}-macos-universal
+          path: dist/blescan-${{ inputs.version }}-macos-universal
           if-no-files-found: error
