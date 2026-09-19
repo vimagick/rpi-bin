@@ -61,7 +61,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-blescan-
 
       - name: Build
-        run: cargo build --locked --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Verify binary
         run: ./target/${{ matrix.target }}/release/blescan --version
