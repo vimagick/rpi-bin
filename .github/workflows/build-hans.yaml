@@ -1,0 +1,51 @@
+name: Build hans
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'hans version'
+        required: true
+        default: 'v1.1'
+        type: string
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+            target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y gcc make
+
+      - name: Download hans source
+        run: |
+          echo "Building hans ${{ inputs.version }}"
+          curl -sSL "https://github.com/friedrich/hans/archive/${{ inputs.version }}.tar.gz" | tar xz --strip 1
+
+      - name: Build
+        run: make
+
+      - name: Rename artifact
+        run: |
+          mkdir -p dist
+          cp hans dist/hans-${{ inputs.version }}-linux-${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hans-${{ inputs.version }}-linux-${{ matrix.arch }}
+          path: dist/hans-${{ inputs.version }}-linux-${{ matrix.arch }}
+          if-no-files-found: error
