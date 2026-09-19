@@ -1,0 +1,80 @@
+name: Build evsieve
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'evsieve version tag (e.g. v1.4.0)'
+        required: true
+        default: 'v1.4.0'
+        type: string
+
+env:
+  EVSIEVE_VERSION: ${{ github.event.inputs.version || 'v1.4.0' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+            target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libevdev2 libevdev-dev binutils
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.arch }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-cargo-
+
+      - name: Download evsieve source
+        run: |
+          echo "Building evsieve ${EVSIEVE_VERSION}"
+          curl -sSL "https://github.com/KarsMulder/evsieve/archive/${EVSIEVE_VERSION}.tar.gz" | tar xz --strip 1
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Strip binary
+        run: strip target/${{ matrix.target }}/release/evsieve
+
+      - name: Verify binary
+        run: ./target/${{ matrix.target }}/release/evsieve --version
+
+      - name: Rename artifact
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/evsieve \
+             dist/evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
+          path: dist/evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
+          if-no-files-found: error
