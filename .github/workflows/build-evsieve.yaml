@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'evsieve version tag (e.g. v1.4.0)'
+        description: 'evsieve version'
         required: true
         default: 'v1.4.0'
         type: string
@@ -75,6 +75,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
-          path: dist/evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
+          name: evsieve-${{ env.EVSIEVE_VERSION }}-linux-${{ matrix.arch }}
+          path: dist/evsieve-${{ env.EVSIEVE_VERSION }}-linux-${{ matrix.arch }}
           if-no-files-found: error
