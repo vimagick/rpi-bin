@@ -43,6 +43,7 @@ jobs:
         run: |
           echo "Building blescan ${{ inputs.version }} on ubuntu-${{ inputs.ubuntu_version }}"
           curl -sSL "https://github.com/mikemoraned/blescan/archive/refs/heads/${{ inputs.version }}.tar.gz" | tar xz --strip 1
+          sed -i 's/⌄/↓/g' blescan-tui/src/main.rs
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
