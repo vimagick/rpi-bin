@@ -86,7 +86,7 @@ jobs:
           ls -lh "../../dist/${output}"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}*
@@ -100,13 +100,13 @@ jobs:
 
     steps:
       - name: Download darwin amd64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: webhook-${{ inputs.webhook_version }}-darwin-amd64
           path: binaries/amd64
 
       - name: Download darwin arm64
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: webhook-${{ inputs.webhook_version }}-darwin-arm64
           path: binaries/arm64
@@ -131,7 +131,7 @@ jobs:
           "dist/webhook-${{ inputs.webhook_version }}-darwin-universal" -version || true
 
       - name: Upload universal binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: webhook-${{ inputs.webhook_version }}-darwin-universal
           path: dist/webhook-${{ inputs.webhook_version }}-darwin-universal

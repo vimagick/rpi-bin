@@ -53,7 +53,7 @@ jobs:
           cp hans dist/hans-${{ inputs.version }}-linux-${{ matrix.arch }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: hans-${{ inputs.version }}-linux-${{ matrix.arch }}
           path: dist/hans-${{ inputs.version }}-linux-${{ matrix.arch }}

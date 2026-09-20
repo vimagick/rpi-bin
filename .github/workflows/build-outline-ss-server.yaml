@@ -86,7 +86,7 @@ jobs:
         run: tar czf outline-ss-server_${VERSION}-dev.tar.gz outline-ss-server_${VERSION}-dev
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: outline-ss-server_${{ env.VERSION }}-dev
           path: outline-ss-server_${{ env.VERSION }}-dev.tar.gz

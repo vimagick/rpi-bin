@@ -73,7 +73,7 @@ jobs:
              dist/evsieve-${EVSIEVE_VERSION}-linux-${{ matrix.arch }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: evsieve-${{ env.EVSIEVE_VERSION }}-linux-${{ matrix.arch }}
           path: dist/evsieve-${{ env.EVSIEVE_VERSION }}-linux-${{ matrix.arch }}
