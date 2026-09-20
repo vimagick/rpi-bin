@@ -91,3 +91,48 @@ jobs:
           name: webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}*
           if-no-files-found: error
+
+  build-macos-universal:
+    name: Build macOS Universal
+    runs-on: macos-latest
+    needs: build
+    if: always() && needs.build.result == 'success'
+
+    steps:
+      - name: Download darwin amd64
+        uses: actions/download-artifact@v4
+        with:
+          name: webhook-${{ inputs.webhook_version }}-darwin-amd64
+          path: binaries/amd64
+
+      - name: Download darwin arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: webhook-${{ inputs.webhook_version }}-darwin-arm64
+          path: binaries/arm64
+
+      - name: Combine with lipo
+        shell: bash
+        run: |
+          mkdir -p dist
+          amd64_bin="$(find binaries/amd64 -type f -name 'webhook-*' | head -n1)"
+          arm64_bin="$(find binaries/arm64 -type f -name 'webhook-*' | head -n1)"
+          echo "amd64: $amd64_bin"
+          echo "arm64: $arm64_bin"
+          lipo -create "$amd64_bin" "$arm64_bin" \
+            -output "dist/webhook-${{ inputs.webhook_version }}-darwin-universal"
+          chmod +x "dist/webhook-${{ inputs.webhook_version }}-darwin-universal"
+
+      - name: Verify universal binary
+        shell: bash
+        run: |
+          file "dist/webhook-${{ inputs.webhook_version }}-darwin-universal"
+          lipo -info "dist/webhook-${{ inputs.webhook_version }}-darwin-universal"
+          "dist/webhook-${{ inputs.webhook_version }}-darwin-universal" -version || true
+
+      - name: Upload universal binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-${{ inputs.webhook_version }}-darwin-universal
+          path: dist/webhook-${{ inputs.webhook_version }}-darwin-universal
+          if-no-files-found: error
