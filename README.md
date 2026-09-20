@@ -1,6 +1,8 @@
 # rpi-bin
 
-pre-built binaries for raspberry-pi
+[![docs](https://img.shields.io/badge/docs-wiki-purple)](https://github.com/vimagick/rpi-bin/wiki)
+
+Pre-built Binaries for Raspberry Pi
 
 - [x] confd (0.11.0)
 - [x] docker-compose (1.8.1)
