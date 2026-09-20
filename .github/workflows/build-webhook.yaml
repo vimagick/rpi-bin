@@ -35,8 +35,6 @@ on:
 
 jobs:
   build:
-    env:
-      GOTOOLCHAIN: local
     name: Build webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     strategy:
