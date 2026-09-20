@@ -1,0 +1,95 @@
+name: Build webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      go_version:
+        description: 'Go version'
+        required: true
+        default: '1.27'
+        type: choice
+        options:
+          - '1.27'
+          - '1.26'
+          - '1.25'
+          - '1.24'
+          - '1.23'
+          - '1.22'
+          - '1.21'
+          - '1.20'
+          - '1.19'
+      webhook_version:
+        description: 'webhook version'
+        required: true
+        default: '2.8.3'
+        type: string
+      ubuntu_version:
+        description: 'Ubuntu version'
+        required: true
+        default: '26.04'
+        type: choice
+        options:
+          - '26.04'
+          - '24.04'
+          - '22.04'
+
+jobs:
+  build:
+    env:
+      GOTOOLCHAIN: local
+    name: Build webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: linux,   arch: amd64, runner: "ubuntu-${{ inputs.ubuntu_version }}" }
+          - { os: linux,   arch: arm64, runner: "ubuntu-${{ inputs.ubuntu_version }}-arm" }
+          - { os: windows, arch: amd64, runner: windows-latest }
+          - { os: windows, arch: arm64, runner: windows-latest }
+          - { os: darwin,  arch: amd64, runner: macos-latest }
+          - { os: darwin,  arch: arm64, runner: macos-latest }
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+
+      - name: Fetch webhook source
+        shell: bash
+        run: |
+          echo "Fetching webhook ${{ inputs.webhook_version }}"
+          mkdir -p src
+          cd src
+          git clone --depth 1 --branch "${{ inputs.webhook_version }}" \
+            https://github.com/adnanh/webhook.git
+          cd webhook
+          git log -1 --oneline
+
+      - name: Build
+        shell: bash
+        working-directory: src/webhook
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          output="webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}"
+          if [[ "${{ matrix.os }}" == "windows" ]]; then
+            output="${output}.exe"
+          fi
+          go build \
+            -installsuffix cgo \
+            -ldflags '-s -extld ld -extldflags -static' \
+            -a -x \
+            -o "../../dist/${output}" \
+            github.com/adnanh/webhook
+          ls -lh "../../dist/${output}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/webhook-${{ inputs.webhook_version }}-${{ matrix.os }}-${{ matrix.arch }}*
+          if-no-files-found: error
