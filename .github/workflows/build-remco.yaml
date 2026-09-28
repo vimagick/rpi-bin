@@ -53,15 +53,16 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: '0'
+          GOBIN: ${{ github.workspace }}/bin
         run: |
           echo "Building remco ${{ inputs.version }} for ${{ matrix.goos }}/${{ matrix.goarch }} with Go ${{ inputs.go_version }}"
-          mkdir -p dist
-          go build -ldflags "-s -w \
+          mkdir -p dist ${{ github.workspace }}/bin
+          go install -ldflags "-s -w \
             -X main.version=${{ inputs.version }} \
             -X main.buildDate=$(date +%F) \
             -X main.commit=${{ github.sha }}" \
-            -o dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }} \
             github.com/HeavyHorst/remco/cmd/remco@${{ inputs.version }}
+          cp ${{ github.workspace }}/bin/remco dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
 
       - name: Verify
         run: |
