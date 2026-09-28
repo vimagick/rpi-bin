@@ -14,9 +14,9 @@ on:
         default: '1.25'
         type: choice
         options:
-          - '1.25'
-          - '1.26'
           - '1.27'
+          - '1.26'
+          - '1.25'
 
 jobs:
   build:
@@ -29,18 +29,18 @@ jobs:
           # Linux
           - goos: linux
             goarch: amd64
-            runner: ubuntu-latest
+            runner: ubuntu-26.04
           - goos: linux
             goarch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-26.04-arm
 
           # macOS
           - goos: darwin
             goarch: amd64
-            runner: macos-14
+            runner: macos-latest
           - goos: darwin
             goarch: arm64
-            runner: macos-14
+            runner: macos-latest
 
     steps:
       - name: Install Go
@@ -80,7 +80,7 @@ jobs:
   universal-macos:
     name: Build darwin-universal
     needs: build
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Download darwin-amd64
         uses: actions/download-artifact@v4
