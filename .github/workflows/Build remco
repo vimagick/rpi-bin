@@ -1,0 +1,111 @@
+name: Build remco
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'remco version'
+        required: true
+        default: 'v0.12.6'
+        type: string
+      go_version:
+        description: 'Go version'
+        required: true
+        default: '1.25'
+        type: choice
+        options:
+          - '1.25'
+          - '1.26'
+          - '1.27'
+
+jobs:
+  build:
+    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            runner: ubuntu-24.04-arm
+
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            runner: macos-13
+          - goos: darwin
+            goarch: arm64
+            runner: macos-14
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+
+      - name: Build remco
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          echo "Building remco ${{ inputs.version }} for ${{ matrix.goos }}/${{ matrix.goarch }} with Go ${{ inputs.go_version }}"
+          go install -ldflags "-s -w \
+            -X main.version=${{ inputs.version }} \
+            -X main.buildDate=$(date +%F) \
+            -X main.commit=${{ github.sha }}" \
+            github.com/HeavyHorst/remco/cmd/remco@${{ inputs.version }}
+
+      - name: Verify
+        run: |
+          file ~/go/bin/remco
+
+      - name: Rename artifact
+        run: |
+          mkdir -p dist
+          cp ~/go/bin/remco dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          if-no-files-found: error
+
+  universal-macos:
+    name: Build darwin-universal
+    needs: build
+    runs-on: macos-14
+    steps:
+      - name: Download darwin-amd64
+        uses: actions/download-artifact@v4
+        with:
+          name: remco-${{ inputs.version }}-darwin-amd64
+          path: dist/amd64
+
+      - name: Download darwin-arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: remco-${{ inputs.version }}-darwin-arm64
+          path: dist/arm64
+
+      - name: Combine with lipo
+        run: |
+          mkdir -p dist
+          lipo -create \
+            dist/amd64/remco-${{ inputs.version }}-darwin-amd64 \
+            dist/arm64/remco-${{ inputs.version }}-darwin-arm64 \
+            -output dist/remco-${{ inputs.version }}-darwin-universal
+          file dist/remco-${{ inputs.version }}-darwin-universal
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: remco-${{ inputs.version }}-darwin-universal
+          path: dist/remco-${{ inputs.version }}-darwin-universal
+          if-no-files-found: error
