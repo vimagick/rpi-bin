@@ -55,20 +55,17 @@ jobs:
           CGO_ENABLED: '0'
         run: |
           echo "Building remco ${{ inputs.version }} for ${{ matrix.goos }}/${{ matrix.goarch }} with Go ${{ inputs.go_version }}"
-          go install -ldflags "-s -w \
+          mkdir -p dist
+          go build -ldflags "-s -w \
             -X main.version=${{ inputs.version }} \
             -X main.buildDate=$(date +%F) \
             -X main.commit=${{ github.sha }}" \
+            -o dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }} \
             github.com/HeavyHorst/remco/cmd/remco@${{ inputs.version }}
 
       - name: Verify
         run: |
-          file ~/go/bin/remco
-
-      - name: Rename artifact
-        run: |
-          mkdir -p dist
-          cp ~/go/bin/remco dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          file dist/remco-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
