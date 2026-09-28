@@ -1,0 +1,71 @@
+name: Build netflow2ng
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'netflow2ng version'
+        required: true
+        default: 'v0.2.2'
+        type: string
+      ubuntu_version:
+        description: 'ubuntu runner version'
+        required: true
+        default: '26.04'
+        type: choice
+        options:
+          - '26.04'
+          - '24.04'
+          - '22.04'
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }} (ubuntu ${{ inputs.ubuntu_version }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-${{ inputs.ubuntu_version }}
+          - arch: arm64
+            runner: ubuntu-${{ inputs.ubuntu_version }}-arm
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y golang-go libzmq3-dev protobuf-compiler
+
+      - name: Download netflow2ng source
+        run: |
+          echo "Building netflow2ng ${{ inputs.version }} on ubuntu-${{ inputs.ubuntu_version }}"
+          mkdir -p netflow2ng
+          cd netflow2ng
+          curl -sSfL "https://github.com/synfinatic/netflow2ng/archive/refs/tags/${{ inputs.version }}.tar.gz" | tar xz --strip 1
+
+      - name: Build
+        working-directory: netflow2ng
+        run: |
+          go mod download
+          OUTPUT_NAME=dist/netflow2ng make
+
+      - name: Strip and verify
+        working-directory: netflow2ng
+        run: |
+          strip dist/netflow2ng
+          file dist/netflow2ng
+          ./dist/netflow2ng --version
+
+      - name: Rename artifact
+        run: |
+          mkdir -p dist
+          cp netflow2ng/dist/netflow2ng dist/netflow2ng-${{ inputs.version }}-linux-${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: netflow2ng-${{ inputs.version }}-linux-${{ matrix.arch }}
+          path: dist/netflow2ng-${{ inputs.version }}-linux-${{ matrix.arch }}
+          if-no-files-found: error
+ 
