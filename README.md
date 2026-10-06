@@ -1,10 +1,9 @@
 # rpi-bin
 
-[![docs](https://img.shields.io/badge/docs-wiki-purple)](https://github.com/vimagick/rpi-bin/wiki)
+[![docs](https://img.shields.io/badge/wiki-rpi--bin-purple?style=for-the-badge&logo=github)](../../wiki)
+[![Github Auto Builds][1]][2]
 
 Pre-built Binaries for Raspberry Pi
-
-[![Github Auto Builds][1]][2]
 
 > [!Tip]
 > Download the artifacts at the bottom of workflow-run pages.
