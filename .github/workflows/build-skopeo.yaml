@@ -1,0 +1,70 @@
+name: Build skopeo
+
+on:
+  workflow_dispatch:
+    inputs:
+      skopeo_version:
+        description: 'skopeo version'
+        required: true
+        default: 'v1.24.1'
+        type: string
+      go_version:
+        description: 'Go version'
+        required: true
+        default: '1.27'
+        type: choice
+        options:
+          - '1.27'
+          - '1.26'
+          - '1.25'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { goos: linux,  goarch: amd64 }
+          - { goos: linux,  goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download skopeo ${{ inputs.skopeo_version }} source
+        run: |
+          set -eux
+          curl -fsSL -o skopeo.tar.gz \
+            "https://github.com/containers/skopeo/archive/refs/tags/${{ inputs.skopeo_version }}.tar.gz"
+          mkdir -p skopeo
+          tar -xzf skopeo.tar.gz -C skopeo --strip-components=1
+          ls -al skopeo | head
+
+      - name: Set up Go ${{ inputs.go_version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+          cache-dependency-path: skopeo/go.sum
+
+      - name: Build ${{ matrix.target.goos }}/${{ matrix.target.goarch }}
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          set -eux
+          out="skopeo-${{ matrix.target.goos }}-${{ matrix.target.goarch }}"
+          cd skopeo
+          go build -mod=vendor \
+            -buildmode=pie \
+            -ldflags '-s -w -extldflags -static' \
+            -tags 'exclude_graphdriver_devicemapper exclude_graphdriver_btrfs containers_image_openpgp' \
+            -o "../bin/${out}" ./cmd/skopeo
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skopeo-${{ inputs.skopeo_version }}-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
+          path: bin/skopeo-${{ matrix.target.goos }}-${{ matrix.target.goarch }}
