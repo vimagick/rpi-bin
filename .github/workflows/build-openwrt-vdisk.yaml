@@ -1,4 +1,4 @@
-name: Build openwrt.vdi
+name: Build openwrt vdisk
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
           - 22.03.7
         default: '25.12.5'
       resize_size:
-        description: 'Target VDI Size (e.g. 128M, 1G)'
+        description: 'Virtual Disk Size'
         required: false
         type: string
         default: '128M'
@@ -49,24 +49,27 @@ jobs:
           qemu-img resize openwrt-*.img "$SIZE"
           qemu-img info openwrt-*.img
 
-      - name: Convert raw image to VDI
+      - name: Convert raw image to VDI/VMDK
         run: |
           qemu-img convert -f raw -O vdi openwrt-*.img openwrt.vdi
-          qemu-img info openwrt.vdi
+          qemu-img convert -f raw -O vmdk openwrt-*.img openwrt.vmdk
 
-      - name: Verify final VDI
+      - name: Verify final VDI/VMDK
         run: |
-          echo "=== VDI info ==="
+          echo "=== VDI/VMDK info ==="
           qemu-img info openwrt.vdi
+          qemu-img info openwrt.vmdk
           echo "=== Actual file size ==="
-          ls -lh openwrt.vdi
-          du -h openwrt.vdi
+          ls -lh openwrt.vdi openwrt.vmdk
+          du -h openwrt.vdi openwrt.vmdk
 
-      - name: Upload VDI artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload VDI/VMDK artifact
+        uses: actions/upload-artifact@v7
         with:
-          name: openwrt-${{ inputs.openwrt_version }}-vdi
-          path: openwrt.vdi
+          name: openwrt-${{ inputs.openwrt_version }}
+          path: |
+            openwrt.vdi
+            openwrt.vmdk
           retention-days: 90
           if-no-files-found: error
           compression-level: 0
