@@ -11,6 +11,7 @@ on:
           - 25.12.5
           - 24.10.8
           - 23.05.6
+          - 22.03.7
         default: '25.12.5'
       resize_size:
         description: 'Target VDI Size (e.g. 128M, 1G)'
@@ -39,7 +40,7 @@ jobs:
 
       - name: Decompress image
         run: |
-          gunzip -f openwrt-*.img.gz
+          gunzip -f openwrt-*.img.gz || [ $? -eq 2 ]
           ls -lh openwrt-*.img
 
       - name: Convert raw image to VDI
