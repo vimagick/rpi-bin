@@ -43,16 +43,15 @@ jobs:
           gunzip -f openwrt-*.img.gz || [ $? -eq 2 ]
           ls -lh openwrt-*.img
 
+      - name: Resize raw image
+        run: |
+          SIZE="${{ inputs.resize_size }}"
+          qemu-img resize openwrt-*.img "$SIZE"
+          qemu-img info openwrt-*.img
+
       - name: Convert raw image to VDI
         run: |
           qemu-img convert -f raw -O vdi openwrt-*.img openwrt.vdi
-          qemu-img info openwrt.vdi
-
-      - name: Resize VDI
-        run: |
-          SIZE="${{ inputs.resize_size }}"
-          echo "Resizing VDI to ${SIZE}"
-          qemu-img resize openwrt.vdi "$SIZE"
           qemu-img info openwrt.vdi
 
       - name: Verify final VDI
