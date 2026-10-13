@@ -1,4 +1,4 @@
-name: Build OpenWrt VDI with qemu-img
+name: Build openwrt.vdi
 
 on:
   workflow_dispatch:
