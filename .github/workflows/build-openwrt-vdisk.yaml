@@ -1,4 +1,4 @@
-name: Build openwrt vdisk
+name: Build openwrt-vdisk
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
         default: '25.12.5'
       resize_size:
         description: 'Virtual Disk Size'
-        required: false
+        required: true
         type: string
         default: '128M'
 
