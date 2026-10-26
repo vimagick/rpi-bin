@@ -8,11 +8,11 @@ on:
         required: true
         type: choice
         options:
-          - 25.12.5
+          - 25.12.6
           - 24.10.8
           - 23.05.6
           - 22.03.7
-        default: '25.12.5'
+        default: '25.12.6'
       resize_size:
         description: 'Virtual Disk Size'
         required: true
@@ -49,19 +49,24 @@ jobs:
           qemu-img resize openwrt-*.img "$SIZE"
           qemu-img info openwrt-*.img
 
-      - name: Convert raw image to VDI/VMDK
+      - name: Convert raw image to VDI/VHDX/VMDK
         run: |
+          # For VirtualBox
           qemu-img convert -f raw -O vdi openwrt-*.img openwrt.vdi
+          # For VMWare
+          qemu-img convert -f raw -O vhdx openwrt-*.img openwrt.vhdx
+          # For Hype-V
           qemu-img convert -f raw -O vmdk openwrt-*.img openwrt.vmdk
 
       - name: Verify final VDI/VMDK
         run: |
-          echo "=== VDI/VMDK info ==="
+          echo "=== File info ==="
           qemu-img info openwrt.vdi
+          qemu-img info openwrt.vhdx
           qemu-img info openwrt.vmdk
-          echo "=== Actual file size ==="
-          ls -lh openwrt.vdi openwrt.vmdk
-          du -h openwrt.vdi openwrt.vmdk
+          echo "=== File size ==="
+          ls -lh openwrt.vdi openwrt.vhdx openwrt.vmdk
+          du -h openwrt.vdi openwrt.vhdx openwrt.vmdk
 
       - name: Upload VDI/VMDK artifact
         uses: actions/upload-artifact@v7
@@ -69,6 +74,7 @@ jobs:
           name: openwrt-${{ inputs.openwrt_version }}
           path: |
             openwrt.vdi
+            openwrt.vhdx
             openwrt.vmdk
           retention-days: 90
           if-no-files-found: error
