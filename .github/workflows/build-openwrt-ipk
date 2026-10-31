@@ -1,0 +1,48 @@
+name: Build OpenWrt Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: 'Target Architecture'
+        required: true
+        default: 'x86_64'
+        type: choice
+        options:
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - arm_cortex-a7_neon-vfpv4
+          - mipsel_24kc
+          - x86_64
+      packages:
+        description: 'Packages to build (space-separated)'
+        required: true
+        default: 'shadowsocks-libev'
+        type: string
+
+jobs:
+  build:
+    name: Build for ${{ github.event.inputs.arch }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build package via SDK
+        uses: openwrt/gh-action-sdk@v9
+        env:
+          ARCH: ${{ github.event.inputs.arch }}
+          VERSION: 24.10.8
+          EXTRA_FEEDS: >-
+            src-git|shadowsocks|https://github.com/shadowsocks/openwrt-feeds.git
+          PACKAGES: ${{ github.event.inputs.packages }}
+
+      - name: Upload compiled packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-packages-${{ github.event.inputs.arch }}
+          path: bin/packages/${{ github.event.inputs.arch }}/**/*.ipk
+          if-no-files-found: error
