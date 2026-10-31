@@ -37,9 +37,8 @@ jobs:
         env:
           ARCH: ${{ github.event.inputs.arch }}
           VERSION: 24.10.8
-          EXTRA_FEEDS: >-
-            src-git|shadowsocks|https://github.com/shadowsocks/openwrt-feeds.git
           PACKAGES: ${{ github.event.inputs.packages }}
+          NO_REFRESH_CHECK: true
 
       - name: Upload compiled packages
         uses: actions/upload-artifact@v4
