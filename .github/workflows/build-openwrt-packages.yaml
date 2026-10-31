@@ -12,6 +12,7 @@ on:
           - aarch64_cortex-a53
           - aarch64_cortex-a72
           - arm_cortex-a7_neon-vfpv4
+          - arm_cortex-a9_vfpv3-d16
           - mipsel_24kc
           - x86_64
       packages:
