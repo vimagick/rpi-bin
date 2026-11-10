@@ -40,7 +40,7 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libssl-dev
+          sudo apt-get install -y build-essential
 
       - name: Download and Extract Socat
         run: |
@@ -57,7 +57,7 @@ jobs:
           if [[ "${{ matrix.arch }}" = "amd64" ]]; then
             export CFLAGS="-O2 -march=x86-64 -mtune=generic"
           fi
-          ./configure --disable-readline LDFLAGS="${LDFLAGS}"
+          ./configure --disable-readline --disable-openssl LDFLAGS="${LDFLAGS}"
           make -j$(nproc)
           strip --strip-all socat
 
