@@ -54,6 +54,9 @@ jobs:
           if [ "${SOCAT_STATIC}" = "true" ]; then
             LDFLAGS="-static"
           fi
+          if [[ "${{ matrix.arch }}" = "amd64" ]]; then
+            export CFLAGS="-O2 -march=x86-64 -mtune=generic"
+          fi
           ./configure --disable-readline LDFLAGS="${LDFLAGS}"
           make -j$(nproc)
           strip --strip-all socat
