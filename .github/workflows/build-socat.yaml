@@ -56,6 +56,7 @@ jobs:
           fi
           ./configure --disable-readline LDFLAGS="${LDFLAGS}"
           make -j$(nproc)
+          strip --strip-all socat
 
       - name: Verify Binary
         run: |
