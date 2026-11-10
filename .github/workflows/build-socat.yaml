@@ -1,0 +1,61 @@
+name: Build socat
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'socat version'
+        required: true
+        default: '1.8.1.3'
+        type: string
+
+env:
+  SOCAT_VERSION: ${{ github.event.inputs.version || '1.8.1.3' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+            target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev
+
+      - name: Download and Extract Socat
+        run: |
+          wget http://www.dest-unreach.org/socat/download/socat-${SOCAT_VERSION}.tar.gz
+          tar -xzf socat-${SOCAT_VERSION}.tar.gz
+
+      - name: Configure and Build
+        run: |
+          cd socat-${SOCAT_VERSION}
+          ./configure --disable-readline LDFLAGS="-static"
+          make -j$(nproc)
+
+      - name: Verify Binary
+        run: |
+          cd socat-${SOCAT_VERSION}
+          file socat
+          ldd socat || true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: socat-${{ env.SOCAT_VERSION }}-linux-${{ matrix.arch }}
+          path: socat-${SOCAT_VERSION}/socat
+          if-no-files-found: error
