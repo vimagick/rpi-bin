@@ -21,6 +21,7 @@ on:
 
 jobs:
   build:
+    name: Build OpenWrt-${{ inputs.openwrt_version }} (${{ inputs.resize_size }})
     runs-on: ubuntu-latest
 
     steps:
