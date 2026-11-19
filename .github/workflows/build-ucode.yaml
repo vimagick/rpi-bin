@@ -96,6 +96,9 @@ jobs:
           make -j$(nproc)
           make install
 
+          strip ${{ github.workspace }}/ucode-install/bin/ucode
+          strip ${{ github.workspace }}/ucode-install/bin/udbg
+
           file ${{ github.workspace }}/ucode-install/bin/ucode || true
           ldd ${{ github.workspace }}/ucode-install/bin/ucode || true
 
