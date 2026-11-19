@@ -1,0 +1,94 @@
+name: Build ucode
+
+on:
+  workflow_dispatch:
+    inputs:
+      ucode_version:
+        description: 'ucode version to build'
+        required: true
+        default: 'master'
+        type: string
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+            target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            pkgconf \
+            libmd-dev \
+            zlib1g-dev \
+            git
+
+      - name: Build json-c (static)
+        run: |
+          git clone --depth=1 https://github.com/json-c/json-c.git
+          cd json-c
+          mkdir build-static
+          cd build-static
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_STATIC_LIBS=ON \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/local
+          make -j$(nproc)
+          make install
+
+      - name: Checkout ucode
+        uses: actions/checkout@v4
+        with:
+          repository: ucode-lang/ucode
+          ref: ${{ inputs.ucode_version }}
+          path: ucode-src
+
+      - name: Build ucode (static)
+        run: |
+          cd ucode-src
+          mkdir build-static
+          cd build-static
+
+          export PKG_CONFIG_PATH="${{ github.workspace }}/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+          export CMAKE_PREFIX_PATH="${{ github.workspace }}/local"
+
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/ucode-install \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_STATIC_LIBS=ON
+
+          make -j$(nproc)
+          make install
+
+          file ${{ github.workspace }}/ucode-install/bin/ucode || true
+          ldd ${{ github.workspace }}/ucode-install/bin/ucode || true
+
+      - name: Package artifacts
+        run: |
+          mkdir -p dist
+          cp -r ${{ github.workspace }}/ucode-install/bin dist/
+          cp -r ${{ github.workspace }}/ucode-install/lib dist/ 2>/dev/null || true
+          cp -r ${{ github.workspace }}/local/lib/libjson-c.a dist/ 2>/dev/null || true
+          cd dist && tar -czvf ../ucode-static-${{ inputs.ucode_version }}-linux-${{ matrix.arch }}.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ucode-static-${{ inputs.ucode_version }}-linux-${{ matrix.arch }}.tar.gz
+          archive: false
+          if-no-files-found: error
