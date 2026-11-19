@@ -3,6 +3,15 @@ name: Build ucode
 on:
   workflow_dispatch:
     inputs:
+      runner_version:
+        description: 'runner version to build'
+        required: true
+        default: '26.04'
+        type: choice
+        options:
+          - '26.04'
+          - '24.10'
+          - '22.04'
       ucode_version:
         description: 'ucode version to build'
         required: true
@@ -23,10 +32,10 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            runner: ubuntu-26.04
+            runner: ubuntu-${{ inputs.runner_version }}
             target: x86_64-unknown-linux-gnu
           - arch: arm64
-            runner: ubuntu-26.04-arm
+            runner: ubuntu-${{ inputs.runner_version }}-arm
             target: aarch64-unknown-linux-gnu
 
     steps:
@@ -96,11 +105,11 @@ jobs:
           cp -r ${{ github.workspace }}/ucode-install/bin dist/
           cp -r ${{ github.workspace }}/ucode-install/lib dist/ 2>/dev/null || true
           cp -r ${{ github.workspace }}/local/lib/libjson-c.a dist/ 2>/dev/null || true
-          cd dist && tar -czvf ../ucode-static-${{ inputs.ucode_version }}-linux-${{ matrix.arch }}.tar.gz .
+          cd dist && tar -czvf ../ucode-${{ inputs.ucode_version }}-${{ matrix.target }}.tar.gz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          path: ucode-static-${{ inputs.ucode_version }}-linux-${{ matrix.arch }}.tar.gz
+          path: ucode-${{ inputs.ucode_version }}-${{ matrix.target }}.tar.gz
           archive: false
           if-no-files-found: error
