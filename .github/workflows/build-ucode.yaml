@@ -57,6 +57,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=OFF \
             -DBUILD_STATIC_LIBS=ON \
+            -DLIBUCODE_STATIC=ON \
             -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/local
           make -j$(nproc)
           make install
