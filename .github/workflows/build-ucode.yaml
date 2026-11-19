@@ -8,6 +8,11 @@ on:
         required: true
         default: 'master'
         type: string
+      jsonc_version:
+        description: 'json-c version to build'
+        required: true
+        default: 'master'
+        type: string
 
 jobs:
   build:
@@ -36,9 +41,15 @@ jobs:
             zlib1g-dev \
             git
 
+      - name: Checkout json-c
+        uses: actions/checkout@v4
+        with:
+          repository: json-c/json-c
+          ref: ${{ inputs.jsonc_version }}
+          path: json-c
+
       - name: Build json-c (static)
         run: |
-          git clone --depth=1 https://github.com/json-c/json-c.git
           cd json-c
           mkdir build-static
           cd build-static
