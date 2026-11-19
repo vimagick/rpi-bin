@@ -25,7 +25,7 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.arch }}
+    name: Build ucode-${{ matrix.arch }} on ${{ matrix.runner }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
