@@ -1,0 +1,57 @@
+name: Build runit
+
+on:
+  workflow_dispatch:
+    inputs:
+      runit_version:
+        description: 'runit version'
+        required: true
+        default: 'v2.3.1'
+      runner_version:
+        description: 'runner version'
+        required: true
+        default: '26.04'
+        type: choice
+        options:
+          - '26.04'
+          - '24.04'
+          - '22.04'
+
+jobs:
+  build:
+    name: Build runit-${{inputs.runit_version}}-${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-${{inputs.runner_version}}
+            arch: amd64
+          - os: ubuntu-${{inputs.runner_version}}-arm
+            arch: arm64
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential git
+
+      - name: Clone source code
+        run: |
+          git clone --depth 1 -b "${{inputs.runit_version}}" https://github.com/g-pape/runit.git
+
+      - name: Compile runit
+        run: |
+          cd runit/package
+          ./compile
+
+      - name: Run checks
+        run: |
+          cd runit/package
+          ./check
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: runit-${{inputs.runit_version}}-${{ matrix.arch }}
+          path: runit/command/*
+          if-no-files-found: error
