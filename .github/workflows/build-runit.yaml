@@ -41,13 +41,13 @@ jobs:
 
       - name: Compile runit
         run: |
-          cd runit/package
-          ./compile
+          cd runit
+          package/compile
 
       - name: Run checks
         run: |
-          cd runit/package
-          ./check
+          cd runit
+          package/check
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
