@@ -63,6 +63,9 @@ jobs:
           curl -fL -o "${FILE}" "${URL}"
           ls -lh "${FILE}"
 
+          echo "TARGET_DIR=${TARGET_DIR}" >> "$GITHUB_ENV"
+          echo "SUB_TARGET=${SUB_TARGET}" >> "$GITHUB_ENV"
+
       - name: Decompress image
         run: |
           gunzip -f openwrt-*.img.gz || [ $? -eq 2 ]
@@ -96,7 +99,7 @@ jobs:
       - name: Upload VDI/VMDK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openwrt-${{ inputs.openwrt_version }}
+          name: openwrt-${{ inputs.openwrt_version }}-${{ env.TARGET_DIR }}-${{ env.SUB_TARGET }}
           path: |
             openwrt.vdi
             openwrt.vhdx
