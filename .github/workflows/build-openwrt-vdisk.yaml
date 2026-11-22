@@ -71,7 +71,7 @@ jobs:
       - name: Resize raw image
         run: |
           SIZE="${{ inputs.resize_size }}"
-          qemu-img resize openwrt-*.img "$SIZE"
+          qemu-img resize -f raw openwrt-*.img "$SIZE"
           qemu-img info openwrt-*.img
 
       - name: Convert raw image to VDI/VHDX/VMDK
