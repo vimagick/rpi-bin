@@ -13,6 +13,19 @@ on:
           - 23.05.6
           - 22.03.7
         default: '25.12.6'
+      openwrt_target:
+        description: 'OpenWrt Target'
+        required: true
+        type: choice
+        options:
+          - x86/64
+          - armsr/armv8
+        default: 'x86/64'
+      openwrt_efi:
+        description: 'OpenWrt EFI'
+        required: true
+        type: boolean
+        default: false
       resize_size:
         description: 'Virtual Disk Size'
         required: true
@@ -21,7 +34,7 @@ on:
 
 jobs:
   build:
-    name: Build OpenWrt-${{ inputs.openwrt_version }} (${{ inputs.resize_size }})
+    name: Build OpenWrt-${{ inputs.openwrt_version }}-${{ inputs.openwrt_target }}${{ inputs.openwrt_efi == true && '-efi' || '' }} (${{ inputs.resize_size }})
     runs-on: ubuntu-latest
 
     steps:
@@ -30,14 +43,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-utils
 
-      - name: Download OpenWrt x86/64 ext4 image
+      - name: Download OpenWrt image
         run: |
+          set -euo pipefail
+
           VERSION="${{ inputs.openwrt_version }}"
-          FILE="openwrt-${VERSION}-x86-64-generic-ext4-combined.img.gz"
-          URL="https://downloads.openwrt.org/releases/${VERSION}/targets/x86/64/${FILE}"
-          echo "Downloading: $URL"
-          curl -fL -o "$FILE" "$URL"
-          ls -lh "$FILE"
+          TARGET="${{ inputs.openwrt_target }}"
+          EFI="${{ inputs.openwrt_efi }}"
+
+          TARGET_DIR="${TARGET%/*}"
+          SUB_TARGET="${TARGET#*/}"
+
+          FILE="openwrt-${VERSION}-${TARGET_DIR}-${SUB_TARGET}-generic-ext4-combined"
+          [[ "${EFI}" = "true" ]] && FILE="${FILE}-efi"
+          FILE="${FILE}.img.gz"
+
+          URL="https://downloads.openwrt.org/releases/${VERSION}/targets/${TARGET_DIR}/${SUB_TARGET}/${FILE}"
+          echo "Downloading: ${URL}"
+          curl -fL -o "${FILE}" "${URL}"
+          ls -lh "${FILE}"
 
       - name: Decompress image
         run: |
