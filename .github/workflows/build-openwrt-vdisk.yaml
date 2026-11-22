@@ -99,7 +99,7 @@ jobs:
       - name: Upload VDI/VMDK artifact
         uses: actions/upload-artifact@v7
         with:
-          name: openwrt-${{ inputs.openwrt_version }}-${{ env.TARGET_DIR }}-${{ env.SUB_TARGET }}
+          name: openwrt-${{ inputs.openwrt_version }}-${{ env.TARGET_DIR }}-${{ env.SUB_TARGET }}${{ inputs.openwrt_efi == true && '-efi' || '' }}
           path: |
             openwrt.vdi
             openwrt.vhdx
